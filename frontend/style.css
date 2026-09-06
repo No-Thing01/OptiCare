@@ -1,0 +1,271 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+:root {
+    --bg-main: #040914;
+    --bg-card: #0a1324;
+    --border-color: rgba(0, 240, 255, 0.15);
+    --accent-cyan: #00f0ff;
+    --accent-red: #ff3366;
+    --accent-green: #00e676;
+    --text-main: #e2e8f0;
+    --text-muted: #8b9bb4;
+}
+
+body {
+    font-family: 'Outfit', sans-serif;
+    margin: 0;
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* --- SIDEBAR --- */
+.sidebar {
+    width: 320px;
+    background: linear-gradient(180deg, #081120 0%, #040914 100%);
+    border-right: 1px solid var(--border-color);
+    padding: 40px 30px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 5px 0 30px rgba(0,0,0,0.5);
+    z-index: 10;
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 50px;
+}
+
+.brand h1 {
+    margin: 0;
+    font-size: 32px;
+    font-weight: 700;
+    background: linear-gradient(90deg, #ffffff, var(--accent-cyan));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: 1px;
+}
+
+.brand-subtitle {
+    color: var(--accent-cyan);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-weight: 600;
+    margin-top: 2px;
+}
+
+/* --- UPLOAD PANEL --- */
+.upload-panel {
+    background: rgba(10, 19, 36, 0.6);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 25px;
+    backdrop-filter: blur(10px);
+}
+
+.upload-title {
+    font-size: 12px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 20px;
+    font-weight: 500;
+}
+
+.custom-file-upload {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 2px dashed rgba(0, 240, 255, 0.3);
+    border-radius: 10px;
+    padding: 30px 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: rgba(0, 240, 255, 0.02);
+}
+
+.custom-file-upload:hover {
+    border-color: var(--accent-cyan);
+    background: rgba(0, 240, 255, 0.08);
+}
+
+.upload-icon {
+    font-size: 30px;
+    margin-bottom: 10px;
+}
+
+#file-name-display {
+    color: var(--text-main);
+    font-weight: 500;
+    font-size: 14px;
+    text-align: center;
+}
+
+input[type="file"] { display: none; }
+
+.analyze-btn {
+    width: 100%;
+    margin-top: 20px;
+    background: linear-gradient(90deg, #0052d4, #4364f7, #6fb1fc);
+    color: white;
+    border: none;
+    padding: 16px;
+    border-radius: 8px;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: 1.5px;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(67, 100, 247, 0.4);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.analyze-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(67, 100, 247, 0.6);
+}
+
+/* --- MAIN CONTENT --- */
+.main-area {
+    flex: 1;
+    padding: 40px;
+    overflow-y: auto;
+    position: relative;
+    background: radial-gradient(circle at 50% 0%, #0a1324 0%, #040914 100%);
+}
+
+/* --- READOUT BADGES --- */
+.readout-container {
+    display: flex;
+    gap: 25px;
+    margin-bottom: 40px;
+}
+
+.readout-card {
+    flex: 1;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 25px 30px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.readout-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; width: 4px; height: 100%;
+}
+
+.readout-red::before { background: var(--accent-red); box-shadow: 0 0 15px var(--accent-red); }
+.readout-green::before { background: var(--accent-green); box-shadow: 0 0 15px var(--accent-green); }
+
+.readout-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 10px;
+    font-weight: 500;
+}
+
+.readout-value {
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.val-red { color: var(--accent-red); }
+.val-green { color: var(--accent-green); }
+
+/* --- VISION GRID --- */
+.vision-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 25px;
+    margin-bottom: 40px;
+}
+
+.vision-card {
+    background: #000;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+.vision-header {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    background: rgba(10, 19, 36, 0.85);
+    backdrop-filter: blur(5px);
+    padding: 12px 15px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent-cyan);
+    letter-spacing: 1.5px;
+    border-bottom: 1px solid var(--border-color);
+    z-index: 2;
+    text-align: center;
+}
+
+.vision-card img {
+    width: 100%;
+    height: 320px;
+    object-fit: contain;
+    display: block;
+    padding-top: 40px; /* Space for the absolute header */
+}
+
+/* --- CLINICAL REPORT TERMINAL --- */
+.report-terminal {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 30px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.terminal-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    color: var(--accent-cyan);
+    font-weight: 600;
+    letter-spacing: 1px;
+    font-size: 14px;
+}
+
+.terminal-text {
+    font-family: 'Courier New', Courier, monospace;
+    color: #a0aec0;
+    line-height: 1.8;
+    font-size: 15px;
+    white-space: pre-wrap;
+}
+
+.hidden { display: none !important; }
+
+/* --- LOADER --- */
+.loader {
+    width: 80px;
+    height: 80px;
+    border: 3px solid rgba(0, 240, 255, 0.1);
+    border-top: 3px solid var(--accent-cyan);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 30px auto;
+}
+
+@keyframes spin { 100% { transform: rotate(360deg); } }

@@ -1,0 +1,26 @@
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Uploads and temporary files
+backend/temp_uploads/
+*.tmp
+*.temp
+.DS_Store
+
+# Large files (optional, but recommended)
+# backend/dr_trained_model.pth
+
+# MATLAB
+*.mat
+*.fig
+*.mex*
+*.asv
