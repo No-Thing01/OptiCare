@@ -126,7 +126,14 @@ def grade_and_explain(filepath, ma_count, matlab_ran):
     # This prevents the overconfident 99-100% predictions on wrong classes.
     scaled_logits = output[0] / TEMPERATURE
     probabilities = torch.nn.functional.softmax(scaled_logits, dim=0)
-    pytorch_class = torch.argmax(probabilities).item()
+    
+    # APPLY WEIGHTED SEVERITY STRATEGY
+    # Multiply probabilities by severity weights to slightly bias toward higher 
+    # severity, increasing clinical safety for border-line cases.
+    severity_weights = torch.tensor([1.0, 1.0, 1.0, 1.15, 1.20], device=device)
+    weighted_probs = probabilities * severity_weights
+    
+    pytorch_class = torch.argmax(weighted_probs).item()
     pytorch_confidence = probabilities[pytorch_class].item() * 100
 
     # Store ALL class probabilities for the report
