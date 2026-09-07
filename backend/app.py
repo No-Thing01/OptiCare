@@ -5,7 +5,7 @@ import numpy as np
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
-from retina_core import process_retina_python
+import matlab.engine
 import torch
 import torch.nn as nn
 from torchvision import models, transforms
@@ -30,6 +30,17 @@ CORS(app)
 UPLOAD_FOLDER = 'temp_uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+# ─── MATLAB Engine ─────────────────────────────────────────────────────────────
+print("Starting MATLAB Engine... (Please wait ~10 seconds)")
+try:
+    eng = matlab.engine.start_matlab()
+    matlab_core_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'matlab_core'))
+    eng.cd(matlab_core_path)
+    print("[OK] MATLAB Engine connected!")
+except Exception as e:
+    print("[FAIL] Failed to start MATLAB Engine:", e)
+    eng = None
 
 # ─── PyTorch Model ─────────────────────────────────────────────────────────────
 print("Loading PyTorch AI Model...")
@@ -179,7 +190,7 @@ def grade_and_explain(filepath, ma_count, matlab_ran):
     cv2.imwrite(heatmap_path, cv2.cvtColor(visualization, cv2.COLOR_RGB2BGR))
 
     # Step 4: Build Clinical Report
-    enhancement_method = "Python/OpenCV CLAHE" if matlab_ran else "Software Fallback"
+    enhancement_method = "MATLAB CLAHE" if matlab_ran else "Software Fallback"
 
     # Build probability distribution string for the report
     prob_str = " | ".join([f"Lv{i}: {all_probs[i]:.1f}%" for i in range(5)])
@@ -234,16 +245,17 @@ def upload():
     enhanced_filepath = filepath
     surf_filepath = ""
     ma_count = 0
-    python_ran = False
+    matlab_ran = False
 
-    try:
-        enhanced_filepath, surf_filepath, ma_count = process_retina_python(filepath, app.config['UPLOAD_FOLDER'])
-        python_ran = True
-    except Exception as e:
-        print(f"Python Processing Error (using fallback): {e}")
+    if eng is not None:
+        try:
+            enhanced_filepath, surf_filepath, ma_count = eng.process_retina(filepath, nargout=3)
+            matlab_ran = True
+        except Exception as e:
+            print(f"MATLAB Error (using fallback): {e}")
 
     dr_grade, confidence, heatmap_filename, report = grade_and_explain(
-        enhanced_filepath, ma_count, python_ran
+        enhanced_filepath, ma_count, matlab_ran
     )
 
     heatmap_filepath = os.path.join(app.config['UPLOAD_FOLDER'], heatmap_filename)
