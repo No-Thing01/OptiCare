@@ -11,6 +11,8 @@ Features:
 import os
 import csv
 import time
+import cv2
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -86,9 +88,22 @@ class UnifiedRetinaDataset(Dataset):
     def __len__(self):
         return len(self.data)
 
+    def apply_clahe(self, img_path):
+        img = cv2.imread(img_path)
+        if img is None:
+            return Image.new('RGB', (224, 224))
+        # CLAHE on LAB
+        lab = cv2.cvtColor(img, cv2.COLOR_BGR2LAB)
+        l, a, b = cv2.split(lab)
+        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
+        cl = clahe.apply(l)
+        merged = cv2.merge((cl, a, b))
+        enhanced_img = cv2.cvtColor(merged, cv2.COLOR_LAB2RGB)
+        return Image.fromarray(enhanced_img)
+
     def __getitem__(self, idx):
         img_path, label = self.data[idx]
-        image = Image.open(img_path).convert('RGB')
+        image = self.apply_clahe(img_path)
         if self.transform:
             image = self.transform(image)
         return image, label
