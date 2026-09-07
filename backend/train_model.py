@@ -24,7 +24,7 @@ from PIL import Image
 # CONFIGURATION — update these if needed
 # ==========================================
 OUTPUT_PATH   = "dr_trained_model.pth"
-EPOCHS        = 50
+EPOCHS        = 100
 BATCH_SIZE    = 16
 LR            = 0.0001
 VAL_SPLIT     = 0.20  # 20% held-out for validation
