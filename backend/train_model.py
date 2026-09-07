@@ -48,17 +48,6 @@ class UnifiedRetinaDataset(Dataset):
                     if os.path.exists(img_path):
                         self.data.append((img_path, int(row[1])))
 
-        # 2. Load IDRiD
-        idrid_csv = r"C:\Users\Sahindeep\Documents\Dataset\IDRiD\B. Disease Grading\2. Groundtruths\a. IDRiD_Disease Grading_Training Labels.csv"
-        idrid_dir = r"C:\Users\Sahindeep\Documents\Dataset\IDRiD\B. Disease Grading\1. Original Images\a. Training Set"
-        if os.path.exists(idrid_csv):
-            with open(idrid_csv, 'r') as f:
-                reader = csv.reader(f)
-                next(reader)
-                for row in reader:
-                    img_path = os.path.join(idrid_dir, row[0] + '.jpg')
-                    if os.path.exists(img_path):
-                        self.data.append((img_path, int(row[1])))
 
         # 3. Load Messidor-2
         messidor_csv = r"C:\Users\Sahindeep\Documents\Dataset\Messidor-2\archive\messidor_data.csv"
@@ -139,7 +128,7 @@ def train():
     ])
 
     # ── Dataset Loading ──────────────────────────────────────────────────────
-    print("\nLoading unified datasets (APTOS + IDRiD + Messidor-2)...")
+    print("\nLoading base datasets (APTOS + Messidor-2)...")
     try:
         full_dataset = UnifiedRetinaDataset(transform=train_transform)
     except Exception as e:
