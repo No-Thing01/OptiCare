@@ -13,6 +13,16 @@ from PIL import Image
 from pytorch_grad_cam import GradCAM
 from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
 from pytorch_grad_cam.utils.image import show_cam_on_image
+import base64
+
+def get_base64_image(filepath):
+    if not filepath or not os.path.exists(filepath):
+        return None
+    with open(filepath, "rb") as img_file:
+        encoded_string = base64.b64encode(img_file.read()).decode('utf-8')
+        ext = os.path.splitext(filepath)[1][1:]
+        if ext.lower() == 'jpg': ext = 'jpeg'
+        return f"data:image/{ext};base64,{encoded_string}"
 
 app = Flask(__name__)
 CORS(app)
@@ -241,14 +251,15 @@ def upload():
         enhanced_filepath, ma_count, matlab_ran
     )
 
+    heatmap_filepath = os.path.join(app.config['UPLOAD_FOLDER'], heatmap_filename)
     return jsonify({
         'status': 'success',
         'grade': dr_grade,
         'confidence': f"{confidence:.1f}",
         'report': report,
-        'enhanced_image_url': f'{request.host_url}temp_uploads/{os.path.basename(enhanced_filepath)}',
-        'heatmap_url': f'{request.host_url}temp_uploads/{heatmap_filename}',
-        'surf_url': f'{request.host_url}temp_uploads/{os.path.basename(surf_filepath)}' if surf_filepath else None,
+        'enhanced_image_url': get_base64_image(enhanced_filepath),
+        'heatmap_url': get_base64_image(heatmap_filepath),
+        'surf_url': get_base64_image(surf_filepath) if surf_filepath else None,
     })
 
 

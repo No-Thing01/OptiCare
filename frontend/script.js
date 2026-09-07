@@ -1,14 +1,3 @@
-async function fetchImageWithHeader(url) {
-    if (!url) return null;
-    try {
-        const response = await fetch(url, { headers: { 'ngrok-skip-browser-warning': 'true' } });
-        const blob = await response.blob();
-        return URL.createObjectURL(blob);
-    } catch (e) {
-        console.error("Failed to load image", e);
-        return url;
-    }
-}
 
 async function uploadImage() {
     const input = document.getElementById('imageInput');
@@ -53,13 +42,13 @@ async function uploadImage() {
             document.getElementById('ai-report').innerText = data.report;
             
             if (data.enhanced_image_url) {
-                document.getElementById('enhanced-image').src = await fetchImageWithHeader(data.enhanced_image_url);
+                document.getElementById('enhanced-image').src = data.enhanced_image_url;
             }
             if (data.heatmap_url) {
-                document.getElementById('heatmap-image').src = await fetchImageWithHeader(data.heatmap_url);
+                document.getElementById('heatmap-image').src = data.heatmap_url;
             }
             if (data.surf_url) {
-                document.getElementById('surf-image').src = await fetchImageWithHeader(data.surf_url);
+                document.getElementById('surf-image').src = data.surf_url;
                 document.getElementById('surf-box').classList.remove('hidden');
             }
 
