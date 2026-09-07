@@ -246,9 +246,9 @@ def upload():
         'grade': dr_grade,
         'confidence': f"{confidence:.1f}",
         'report': report,
-        'enhanced_image_url': f'http://127.0.0.1:5000/temp_uploads/{os.path.basename(enhanced_filepath)}',
-        'heatmap_url': f'http://127.0.0.1:5000/temp_uploads/{heatmap_filename}',
-        'surf_url': f'http://127.0.0.1:5000/temp_uploads/{os.path.basename(surf_filepath)}' if surf_filepath else None,
+        'enhanced_image_url': f'{request.host_url}temp_uploads/{os.path.basename(enhanced_filepath)}',
+        'heatmap_url': f'{request.host_url}temp_uploads/{heatmap_filename}',
+        'surf_url': f'{request.host_url}temp_uploads/{os.path.basename(surf_filepath)}' if surf_filepath else None,
     })
 
 

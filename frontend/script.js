@@ -23,9 +23,12 @@ async function uploadImage() {
     loadingState.classList.remove('hidden');
 
     try {
-        const response = await fetch('http://127.0.0.1:5000/upload', {
+        const response = await fetch('https://savings-appliance-jarring.ngrok-free.dev/upload', {
             method: 'POST',
-            body: formData
+            body: formData,
+            headers: {
+                'ngrok-skip-browser-warning': 'true'
+            }
         });
         const data = await response.json();
 
