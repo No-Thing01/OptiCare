@@ -1,10 +1,11 @@
 """
-OptiCare — PyTorch Training Pipeline
-Fixed loopholes:
-  #9: Added 80/20 train/validation split to detect overfitting
-  #10: Added ReduceLROnPlateau scheduler for proper convergence
-  BONUS: Added ColorJitter augmentation for robustness across different cameras
-  BONUS: Added per-class accuracy reporting so you know which disease level is weakest
+OptiCare — Unified PyTorch Training Pipeline
+Features:
+  - Cross-Dataset Generalization: Trains on APTOS, IDRiD, and Messidor-2 combined.
+  - Dynamic Class Weights: Automatically balances loss based on combined dataset distribution.
+  - 80/20 train/validation split to detect overfitting.
+  - ReduceLROnPlateau scheduler for proper convergence.
+  - ColorJitter augmentation for robustness across different fundus cameras.
 """
 
 import os
@@ -20,8 +21,6 @@ from PIL import Image
 # ==========================================
 # CONFIGURATION — update these if needed
 # ==========================================
-CSV_FILE_PATH = r"C:\Users\Sahindeep\Documents\Dataset\train_1.csv"
-IMG_DIR_PATH  = r"C:\Users\Sahindeep\Documents\Dataset\train_images\train_images"
 OUTPUT_PATH   = "dr_trained_model.pth"
 EPOCHS        = 50
 BATCH_SIZE    = 16
@@ -30,35 +29,66 @@ VAL_SPLIT     = 0.20  # 20% held-out for validation
 # ==========================================
 
 
-class APTOSDataset(Dataset):
-    def __init__(self, csv_file, img_dir, transform=None):
-        self.img_dir   = img_dir
+class UnifiedRetinaDataset(Dataset):
+    def __init__(self, transform=None):
         self.transform = transform
-        self.data      = []
+        self.data = []
+        
+        # 1. Load APTOS
+        aptos_csv = r"C:\Users\Sahindeep\Documents\Dataset\APTOS\train_1.csv"
+        aptos_dir = r"C:\Users\Sahindeep\Documents\Dataset\APTOS\train_images"
+        if os.path.exists(aptos_csv):
+            with open(aptos_csv, 'r') as f:
+                reader = csv.reader(f)
+                next(reader)  # skip header
+                for row in reader:
+                    img_path = os.path.join(aptos_dir, row[0] + '.png')
+                    if os.path.exists(img_path):
+                        self.data.append((img_path, int(row[1])))
 
-        with open(csv_file, 'r') as f:
-            reader = csv.reader(f)
-            next(reader)  # skip header
-            for row in reader:
-                img_path = os.path.join(img_dir, row[0] + '.png')
-                if os.path.exists(img_path):
-                    self.data.append((row[0], int(row[1])))
+        # 2. Load IDRiD
+        idrid_csv = r"C:\Users\Sahindeep\Documents\Dataset\IDRiD\B. Disease Grading\2. Groundtruths\a. IDRiD_Disease Grading_Training Labels.csv"
+        idrid_dir = r"C:\Users\Sahindeep\Documents\Dataset\IDRiD\B. Disease Grading\1. Original Images\a. Training Set"
+        if os.path.exists(idrid_csv):
+            with open(idrid_csv, 'r') as f:
+                reader = csv.reader(f)
+                next(reader)
+                for row in reader:
+                    img_path = os.path.join(idrid_dir, row[0] + '.jpg')
+                    if os.path.exists(img_path):
+                        self.data.append((img_path, int(row[1])))
 
-        print(f"  Dataset: {len(self.data)} valid images found.")
-        counts = [0] * 5
+        # 3. Load Messidor-2
+        messidor_csv = r"C:\Users\Sahindeep\Documents\Dataset\Messidor-2\archive\messidor_data.csv"
+        messidor_dir = r"C:\Users\Sahindeep\Documents\Dataset\Messidor-2\IMAGES.zip\IMAGES"
+        if os.path.exists(messidor_csv):
+            with open(messidor_csv, 'r') as f:
+                reader = csv.reader(f)
+                next(reader)
+                for row in reader:
+                    # row format: image_id, adjudicated_dr_grade, adjudicated_dme, adjudicated_gradable
+                    if len(row) >= 4 and row[3] == '1':  # Check if gradable
+                        img_path = os.path.join(messidor_dir, row[0])
+                        if os.path.exists(img_path):
+                            self.data.append((img_path, int(row[1])))
+
+        if len(self.data) == 0:
+            raise ValueError("No images found! Please check your dataset paths.")
+
+        print(f"  Dataset: {len(self.data)} total images found across all sources.")
+        self.counts = [0] * 5
         for _, label in self.data:
-            counts[label] += 1
+            self.counts[label] += 1
         print("  Class distribution:")
-        for i, c in enumerate(counts):
+        for i, c in enumerate(self.counts):
             print(f"    Level {i}: {c} images ({100*c/len(self.data):.1f}%)")
 
     def __len__(self):
         return len(self.data)
 
     def __getitem__(self, idx):
-        img_name = os.path.join(self.img_dir, self.data[idx][0] + '.png')
-        image    = Image.open(img_name).convert('RGB')
-        label    = self.data[idx][1]
+        img_path, label = self.data[idx]
+        image = Image.open(img_path).convert('RGB')
         if self.transform:
             image = self.transform(image)
         return image, label
@@ -66,7 +96,7 @@ class APTOSDataset(Dataset):
 
 def train():
     print("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-    print("  OptiCare — PyTorch Training Pipeline")
+    print("  OptiCare — Unified Training Pipeline")
     print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -81,7 +111,7 @@ def train():
         transforms.RandomHorizontalFlip(),
         transforms.RandomVerticalFlip(),
         transforms.RandomRotation(20),
-        # BONUS FIX: ColorJitter makes the model robust to different fundus camera brands
+        # ColorJitter makes the model robust to different fundus camera brands
         transforms.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.2),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
@@ -94,14 +124,14 @@ def train():
     ])
 
     # ── Dataset Loading ──────────────────────────────────────────────────────
-    print("\nLoading dataset...")
+    print("\nLoading unified datasets (APTOS + IDRiD + Messidor-2)...")
     try:
-        full_dataset = APTOSDataset(CSV_FILE_PATH, IMG_DIR_PATH, transform=train_transform)
+        full_dataset = UnifiedRetinaDataset(transform=train_transform)
     except Exception as e:
         print(f"❌ Could not load dataset: {e}")
         return
 
-    # FIX #9: Proper train/val split
+    # Proper train/val split
     n_val   = int(len(full_dataset) * VAL_SPLIT)
     n_train = len(full_dataset) - n_val
     train_set, val_set = random_split(full_dataset, [n_train, n_val])
@@ -120,16 +150,16 @@ def train():
     model.fc = nn.Linear(model.fc.in_features, 5)
     model = model.to(device)
 
-    # ── Loss Function with Class Weights ─────────────────────────────────────
-    # Weights inversely proportional to class frequency in APTOS 2019
-    # Level 0: 1805 (49.5%), Level 1: 370 (10.1%), Level 2: 999 (27.4%),
-    # Level 3: 193 (5.3%),  Level 4: 295 (8.1%)
-    class_weights = torch.tensor([0.40, 1.97, 0.73, 3.79, 2.48]).to(device)
+    # ── Dynamic Loss Function Weights ────────────────────────────────────────
+    # Weights inversely proportional to class frequency in combined dataset
+    total_imgs = len(full_dataset.data)
+    weights = [total_imgs / (5 * c) if c > 0 else 0 for c in full_dataset.counts]
+    class_weights = torch.tensor(weights, dtype=torch.float32).to(device)
     criterion = nn.CrossEntropyLoss(weight=class_weights)
 
     optimizer = optim.Adam(model.parameters(), lr=LR, weight_decay=1e-4)
 
-    # FIX #10: Learning rate scheduler — halves LR if val_loss plateaus for 3 epochs
+    # Learning rate scheduler — halves LR if val_loss plateaus for 3 epochs
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(
         optimizer, mode='min', factor=0.5, patience=3, verbose=True
     )
@@ -156,7 +186,7 @@ def train():
             train_loss    += loss.item() * inputs.size(0)
             train_correct += (outputs.argmax(1) == labels).sum().item()
 
-        # Validate — FIX #9
+        # Validate
         model.eval()
         val_loss = 0.0
         val_correct = 0
