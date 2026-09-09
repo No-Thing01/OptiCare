@@ -50,8 +50,8 @@ num_ftrs = ai_model.fc.in_features
 ai_model.fc = nn.Linear(num_ftrs, 5)
 
 try:
-    weights_path = os.path.join(os.path.dirname(__file__), "dr_trained_model.pth")
-    ai_model.load_state_dict(torch.load(weights_path, map_location=device, weights_only=True))
+    MODEL_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "dr_finetuned_idrid.pth")
+    ai_model.load_state_dict(torch.load(MODEL_PATH, map_location=device, weights_only=True))
     print("[OK] Successfully loaded TRAINED AI weights!")
 except Exception as e:
     print("[WARN] Could not find trained weights. Using random weights.", e)
@@ -242,6 +242,19 @@ def upload():
     filepath = os.path.abspath(os.path.join(app.config['UPLOAD_FOLDER'], unique_name))
     file.save(filepath)
 
+    def apply_python_clahe(img_path, out_dir):
+        img = cv2.imread(img_path)
+        if img is None: return img_path
+        lab = cv2.cvtColor(img, cv2.COLOR_BGR2LAB)
+        l, a, b = cv2.split(lab)
+        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
+        cl = clahe.apply(l)
+        merged = cv2.merge((cl, a, b))
+        enhanced_img = cv2.cvtColor(merged, cv2.COLOR_LAB2RGB)
+        out_path = os.path.join(out_dir, "fallback_clahe_" + os.path.basename(img_path))
+        cv2.imwrite(out_path, cv2.cvtColor(enhanced_img, cv2.COLOR_RGB2BGR))
+        return out_path
+
     enhanced_filepath = filepath
     surf_filepath = ""
     ma_count = 0
@@ -253,6 +266,9 @@ def upload():
             matlab_ran = True
         except Exception as e:
             print(f"MATLAB Error (using fallback): {e}")
+            
+    if not matlab_ran:
+        enhanced_filepath = apply_python_clahe(filepath, app.config['UPLOAD_FOLDER'])
 
     dr_grade, confidence, heatmap_filename, report = grade_and_explain(
         enhanced_filepath, ma_count, matlab_ran

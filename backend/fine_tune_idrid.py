@@ -28,9 +28,22 @@ LR            = 1e-5  # Very small learning rate for fine-tuning
 VAL_SPLIT     = 0.20
 # ==========================================
 
-class IDRiDDataset(Dataset):
-    def __init__(self, transform=None):
+class TransformSubset(Dataset):
+    def __init__(self, subset, transform):
+        self.subset = subset
         self.transform = transform
+        
+    def __getitem__(self, idx):
+        image, label = self.subset[idx]
+        if self.transform:
+            image = self.transform(image)
+        return image, label
+        
+    def __len__(self):
+        return len(self.subset)
+
+class IDRiDDataset(Dataset):
+    def __init__(self):
         self.data = []
         
         idrid_csv = r"C:\Users\Sahindeep\Documents\Dataset\IDRiD\B. Disease Grading\2. Groundtruths\a. IDRiD_Disease Grading_Training Labels.csv"
@@ -71,8 +84,6 @@ class IDRiDDataset(Dataset):
     def __getitem__(self, idx):
         img_path, label = self.data[idx]
         image = self.apply_clahe(img_path)
-        if self.transform:
-            image = self.transform(image)
         return image, label
 
 
@@ -101,12 +112,14 @@ def finetune():
     ])
 
     print("\nLoading IDRiD Dataset...")
-    full_dataset = IDRiDDataset(transform=train_transform)
+    full_dataset = IDRiDDataset()
 
     n_val   = int(len(full_dataset) * VAL_SPLIT)
     n_train = len(full_dataset) - n_val
-    train_set, val_set = random_split(full_dataset, [n_train, n_val])
-    val_set.dataset.transform = val_transform
+    base_train_set, base_val_set = random_split(full_dataset, [n_train, n_val])
+    
+    train_set = TransformSubset(base_train_set, train_transform)
+    val_set = TransformSubset(base_val_set, val_transform)
 
     train_loader = DataLoader(train_set, batch_size=BATCH_SIZE, shuffle=True,  num_workers=2, pin_memory=True)
     val_loader   = DataLoader(val_set,   batch_size=BATCH_SIZE, shuffle=False, num_workers=2, pin_memory=True)
